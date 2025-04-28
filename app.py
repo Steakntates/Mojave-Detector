@@ -42,3 +42,16 @@ if uploaded_file:
 
 else:
     st.info("📂 Upload an image to start.")
+import streamlit as st
+import leafmap.foliumap as leafmap
+
+st.title("🛰️ Mojave Desert Live Map")
+
+# Create a map centered on the Mojave Desert
+m = leafmap.Map(center=(35.0, -115.5), zoom=7)
+
+# Add a basemap
+m.add_basemap("SATELLITE")
+
+# Display the map inside Streamlit
+m.to_streamlit(width=800, height=600)
