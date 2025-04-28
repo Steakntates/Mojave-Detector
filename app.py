@@ -14,6 +14,8 @@ st.title("🧭 Mojave Desert Feature Detection App")
 # --- Session state to share data between tabs ---
 if "mask_file" not in st.session_state:
     st.session_state["mask_file"] = None
+if "bounds" not in st.session_state:
+    st.session_state["bounds"] = None
 
 # --- Tabs ---
 tab1, tab2 = st.tabs(["🔍 Detection Tool", "🌎 Live Mojave Map"])
@@ -57,6 +59,21 @@ with tab1:
         # Save path to session state
         st.session_state["mask_file"] = mask_path
 
+        # Dynamically generate bounds based on image size
+        center_lat, center_lon = 35.0, -115.5  # Center of Mojave Desert
+        meters_per_pixel = 1.0  # Assume 1 meter per pixel (MVP)
+        degrees_per_meter = 1 / 111320  # Rough conversion
+
+        height, width = mask.shape
+        delta_lat = (height * meters_per_pixel) * degrees_per_meter
+        delta_lon = (width * meters_per_pixel) * degrees_per_meter
+
+        bounds = [
+            (center_lat - delta_lat / 2, center_lon - delta_lon / 2),  # SouthWest
+            (center_lat + delta_lat / 2, center_lon + delta_lon / 2),  # NorthEast
+        ]
+        st.session_state["bounds"] = bounds
+
         st.download_button(
             "Download Detection Mask",
             data=Image.fromarray(mask).tobytes(),
@@ -75,13 +92,5 @@ with tab2:
     m.add_basemap("SATELLITE")
 
     # If there is a detection mask, add it as an overlay
-    if st.session_state["mask_file"]:
-        m.add_image(
-            st.session_state["mask_file"],
-            bounds=[(34.5, -116.5), (35.5, -114.5)],  # Rough bounds for Mojave Desert
-            opacity=0.5,
-            name="Detection Overlay",
-        )
-
-
-    m.to_streamlit(height=700)
+    if st.session_state["mask_file"] and st.session_state["bounds"]:
+        m.add
