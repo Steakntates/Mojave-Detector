@@ -82,6 +82,6 @@ with tab2:
             opacity=0.5,
             name="Detection Overlay",
         )
-        m.add_legend(title="Detection Mask", labels=["Detected Area"], colors=["red"])
+
 
     m.to_streamlit(height=700)
