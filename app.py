@@ -16,6 +16,10 @@ if "mask_file" not in st.session_state:
     st.session_state["mask_file"] = None
 if "bounds" not in st.session_state:
     st.session_state["bounds"] = None
+if "map_center" not in st.session_state:
+    st.session_state["map_center"] = (35.0, -115.5)
+if "map_zoom" not in st.session_state:
+    st.session_state["map_zoom"] = 7
 
 # --- Tabs ---
 tab1, tab2 = st.tabs(["🔍 Detection Tool", "🌎 Live Mojave Map"])
@@ -61,8 +65,8 @@ with tab1:
 
         # Dynamically generate bounds based on image size
         center_lat, center_lon = 35.0, -115.5  # Center of Mojave Desert
-        meters_per_pixel = 1.0  # Assume 1 meter per pixel (MVP)
-        degrees_per_meter = 1 / 111320  # Rough conversion
+        meters_per_pixel = 1.0  # Assume 1 meter per pixel
+        degrees_per_meter = 1 / 111320  # Rough
 
         height, width = mask.shape
         delta_lat = (height * meters_per_pixel) * degrees_per_meter
@@ -73,6 +77,19 @@ with tab1:
             (center_lat + delta_lat / 2, center_lon + delta_lon / 2),  # NorthEast
         ]
         st.session_state["bounds"] = bounds
+
+        # Set map center and zoom dynamically
+        st.session_state["map_center"] = (center_lat, center_lon)
+
+        # Calculate zoom level based on width
+        if width <= 500:
+            st.session_state["map_zoom"] = 17
+        elif width <= 1000:
+            st.session_state["map_zoom"] = 16
+        elif width <= 3000:
+            st.session_state["map_zoom"] = 15
+        else:
+            st.session_state["map_zoom"] = 13
 
         st.download_button(
             "Download Detection Mask",
@@ -88,9 +105,16 @@ with tab1:
 with tab2:
     st.header("🌎 Live Satellite Map - Mojave Desert")
 
-    m = leafmap.Map(center=(35.0, -115.5), zoom=7)
+    m = leafmap.Map(center=st.session_state["map_center"], zoom=st.session_state["map_zoom"])
     m.add_basemap("SATELLITE")
 
     # If there is a detection mask, add it as an overlay
     if st.session_state["mask_file"] and st.session_state["bounds"]:
-        m.add
+        m.add_image(
+            st.session_state["mask_file"],
+            bounds=st.session_state["bounds"],
+            opacity=0.5,
+            name="Detection Overlay",
+        )
+
+    m.to_streamlit(height=700)
